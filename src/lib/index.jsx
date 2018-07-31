@@ -1,88 +1,6 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
 
-const ItemDefaultRendered = ({
-  item: { color },
-  index,
-  active,
-  toggleActive,
-  setActive,
-  removeActive,
-  speedMove,
-  width,
-  widthPercent,
-  scaleActiveBy,
-  spaceBetween,
-}) => (
-  <ItemDefault
-    onMouseEnter={setActive}
-    onMouseLeave={removeActive}
-    style={{
-      backgroundColor: color,
-    }}
-  >
-    <div>{index}</div>
-  </ItemDefault>
-);
-const ItemDefault = styled.div`
-  flex: 1;
-  height: 200px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 40px;
-  position: relative;
-  cursor: pointer;
-  user-select: none;
-`;
-/*
-<span>
-  {active && (
-    <ItemDefaultActive
-      style={{
-        backgroundColor: color,
-      }}
-      onMouseEnter={setActive}
-      onMouseLeave={removeActive}
-      {...{
-        speedMove,
-        width,
-        widthPercent,
-        scaleActiveBy,
-        spaceBetween,
-      }}
-    >
-      <div>{index}</div>
-    </ItemDefaultActive>
-  )}
-</span>
-const ItemDefaultActive = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 60px;
-  position: absolute;
-  z-index: 2;
-  top: 0;
-  bottom: 0;
-  width: ${({ widthPercent, scaleActiveBy }) => (scaleActiveBy / 2 + 1) * 100}%;
-  left: ${({ widthPercent, scaleActiveBy }) => (-(scaleActiveBy / 2) * 100) / 2}%;
-  margin: 0 -${({ spaceBetween }) => spaceBetween * 2}px;
-`;
-*/
-/*
-animation: ${keyframes`
-  0% {
-    transform: scale(.7);
-  }
-  100% {
-    transform: scale(1);
-  }
-`} ${({ speedMove }) => speedMove}ms cubic-bezier(0.5, 0, 0.1, 1);
-*/
-
 export default class Lolomo extends React.Component {
   constructor(props) {
     super(props);
@@ -90,6 +8,7 @@ export default class Lolomo extends React.Component {
     this.sliderInnerRef = null;
     this.timeoutEnter = null;
     this.timeoutLeave = null;
+    this.id = 'Lolomo.' + new Date().getTime();
   }
   componentDidMount() {
     this.setState({ width: 0, scroll: 0, active: null });
@@ -155,6 +74,9 @@ export default class Lolomo extends React.Component {
       speedSlide,
       speedMove,
       backgroundColor,
+      renderItem: SliderItemInner,
+      renderHandlePrev: SliderHandlePrevInner,
+      renderHandleNext: SliderHandleNextInner,
     } = this.props;
     const itemWidth = +(this.state.width / itemsPerSlide).toFixed(2);
     const itemWidthPercent = +(100 / itemsPerSlide).toFixed(6);
@@ -172,10 +94,12 @@ export default class Lolomo extends React.Component {
             width={navPadding}
             disabled={this.state.scroll === 0}
           >
-            {this.props.renderHandlePrev({
-              goToPrev: this.goToPrev,
-              disabled: this.state.scroll === 0,
-            })}
+            <SliderHandlePrevInner
+              {...{
+                goToPrev: this.goToPrev,
+                disabled: this.state.scroll === 0,
+              }}
+            />
           </SliderHandlePrev>
           <SliderHandleNext
             backgroundColor={backgroundColor}
@@ -183,10 +107,12 @@ export default class Lolomo extends React.Component {
             width={navPadding}
             disabled={!this.canGoToNext()}
           >
-            {this.props.renderHandleNext({
-              goToNext: this.goToNext,
-              disabled: !this.canGoToNext(),
-            })}
+            <SliderHandleNextInner
+              {...{
+                goToNext: this.goToNext,
+                disabled: !this.canGoToNext(),
+              }}
+            />
           </SliderHandleNext>
           <SliderInner
             speedSlide={speedSlide}
@@ -198,6 +124,7 @@ export default class Lolomo extends React.Component {
           >
             {items.map((item, index) => (
               <SliderItem
+                key={[this.id, index].join('.')}
                 speedMove={speedMove}
                 spaceBetween={spaceBetween}
                 width={itemWidth}
@@ -212,19 +139,21 @@ export default class Lolomo extends React.Component {
                 isActive={this.state.active === index}
                 index={index}
               >
-                {this.props.renderItem({
-                  item,
-                  index,
-                  speedMove,
-                  scaleActiveBy,
-                  spaceBetween: spaceBetween,
-                  width: itemWidth,
-                  widthPercent: itemWidthPercent,
-                  active: this.state.active === index,
-                  setActive: () => this.setActive(index),
-                  removeActive: this.removeActive,
-                  toggleActive: () => this.toggleActive(index),
-                })}
+                <SliderItemInner
+                  {...{
+                    item,
+                    index,
+                    speedMove,
+                    scaleActiveBy,
+                    spaceBetween: spaceBetween,
+                    width: itemWidth,
+                    widthPercent: itemWidthPercent,
+                    active: this.state.active === index,
+                    setActive: () => this.setActive(index),
+                    removeActive: this.removeActive,
+                    toggleActive: () => this.toggleActive(index),
+                  }}
+                />
               </SliderItem>
             ))}
           </SliderInner>
@@ -243,7 +172,17 @@ Lolomo.defaultProps = {
   speedSlide: 900,
   speedMove: 350,
   hoverTimeout: 500,
-  renderItem: ItemDefaultRendered,
+  renderItem: ({ item: { color }, index, setActive, removeActive }) => (
+    <ItemDefault
+      onMouseEnter={setActive}
+      onMouseLeave={removeActive}
+      style={{
+        backgroundColor: color,
+      }}
+    >
+      <div>{index}</div>
+    </ItemDefault>
+  ),
   renderHandlePrev: ({ goToPrev, ...p }) => (
     <SliderHandleDefault {...p} onClick={goToPrev}>
       <i className={`fa fa-chevron-left`} aria-hidden="true" />
@@ -255,6 +194,19 @@ Lolomo.defaultProps = {
     </SliderHandleDefault>
   ),
 };
+
+const ItemDefault = styled.div`
+  flex: 1;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+`;
 
 const Slider = styled.div`
   position: relative;
