@@ -84,7 +84,8 @@ export default class Lolomo extends React.Component {
     super(props);
     this.state = { width: 0, scroll: 0, active: null };
     this.sliderInnerRef = null;
-    this.timeout = null;
+    this.timeoutEnter = null;
+    this.timeoutLeave = null;
   }
   componentDidMount() {
     this.setState({ width: 0, scroll: 0, active: null });
@@ -123,12 +124,15 @@ export default class Lolomo extends React.Component {
     return Math.max(0, Math.ceil(items.length / itemsPerSlide) - 1) + 1;
   };
   setActive = i => {
+    this.timeoutLeave && clearTimeout(this.timeoutLeave);
+    this.timeoutEnter = setTimeout(() => this.setState({ active: i }), 250);
+    // this.setState({ active: i });
     // this.timeout = setTimeout(() => this.setState({ active: i }), 300);
-    this.setState({ active: i });
   };
   removeActive = () => {
-    // this.timeout && clearTimeout(this.timeout);
-    this.setState({ active: null });
+    this.timeoutEnter && clearTimeout(this.timeoutEnter);
+    this.timeoutLeave = setTimeout(() => this.setState({ active: null }), 500);
+    // this.setState({ active: null });
   };
   toggleActive = i => {
     if (this.state.active === i) {
@@ -146,6 +150,7 @@ export default class Lolomo extends React.Component {
       spaceBetween,
       speedSlide,
       speedMove,
+      backgroundColor,
     } = this.props;
     const itemWidth = +(this.state.width / itemsPerSlide).toFixed(2);
     const itemWidthPercent = +(100 / itemsPerSlide).toFixed(6);
@@ -157,26 +162,28 @@ export default class Lolomo extends React.Component {
     return (
       <React.Fragment>
         <Slider navPadding={navPadding}>
-          {this.state.scroll !== 0 && (
-            <SliderHandlePrev
-              width={navPadding}
-              disabled={this.state.scroll === 0}
-              onClick={this.goPrev}
-            >
-              {this.props.renderHandlePrev({
-                goToPrev: this.goToPrev,
-                disabled: this.state.scroll === 0,
-              })}
-            </SliderHandlePrev>
-          )}
-          {this.canGoToNext() && (
-            <SliderHandleNext width={navPadding} disabled={!this.canGoToNext()}>
-              {this.props.renderHandleNext({
-                goToNext: this.goToNext,
-                disabled: !this.canGoToNext(),
-              })}
-            </SliderHandleNext>
-          )}
+          <SliderHandlePrev
+            backgroundColor={backgroundColor}
+            spaceBetween={spaceBetween}
+            width={navPadding}
+            disabled={this.state.scroll === 0}
+          >
+            {this.props.renderHandlePrev({
+              goToPrev: this.goToPrev,
+              disabled: this.state.scroll === 0,
+            })}
+          </SliderHandlePrev>
+          <SliderHandleNext
+            backgroundColor={backgroundColor}
+            spaceBetween={spaceBetween}
+            width={navPadding}
+            disabled={!this.canGoToNext()}
+          >
+            {this.props.renderHandleNext({
+              goToNext: this.goToNext,
+              disabled: !this.canGoToNext(),
+            })}
+          </SliderHandleNext>
           <SliderInner
             speedSlide={speedSlide}
             spaceBetween={spaceBetween}
@@ -221,13 +228,15 @@ export default class Lolomo extends React.Component {
   }
 }
 Lolomo.defaultProps = {
+  backgroundColor: 'black',
   items: [],
-  itemsPerSlide: 6,
+  itemsPerSlide: 8,
   scaleActiveBy: 2,
   spaceBetween: 4,
   navPadding: 80,
   speedSlide: 900,
   speedMove: 450,
+  hoverTimeout: 500,
   renderItem: ItemDefaultRendered,
   renderHandlePrev: ({ goToPrev, ...p }) => (
     <SliderHandleDefault {...p} onClick={goToPrev}>
@@ -253,7 +262,7 @@ const SliderInner = styled.div`
   transform: translate3d(${({ x = 0 }) => x}px, 0, 0);
   backface-visibility: hidden;
   overflow-x: visible;
-  margin: 0 ${({ spaceBetween }) => spaceBetween}px;
+  margin: 0 -${({ spaceBetween }) => spaceBetween}px;
 `;
 const SliderHandle = styled.div`
   position: absolute;
@@ -265,9 +274,21 @@ const SliderHandle = styled.div`
 `;
 const SliderHandlePrev = styled(SliderHandle)`
   left: 0;
+  margin-left: -${({ spaceBetween }) => spaceBetween * 2}px;
+  background-image: linear-gradient(
+    to left,
+    transparent,
+    ${({ backgroundColor }) => backgroundColor}
+  );
 `;
 const SliderHandleNext = styled(SliderHandle)`
   right: 0;
+  margin-right: -${({ spaceBetween }) => spaceBetween * 2}px;
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    ${({ backgroundColor }) => backgroundColor}
+  );
 `;
 const SliderHandleDefault = styled.div`
   display: flex;
@@ -276,13 +297,9 @@ const SliderHandleDefault = styled.div`
   font-size: 24px;
   transition: background-color 200ms ease;
   color: rgba(255, 255, 255, 1);
-  background-color: rgba(0, 0, 0, 0.7);
   width: 100%;
   height: 100%;
   pointer-events: ${({ disabled }) => (disabled ? 'none' : 'auto')};
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.4);
-  }
   ${({ disabled }) =>
     disabled &&
     `
@@ -290,8 +307,14 @@ const SliderHandleDefault = styled.div`
     background-color: transparent;
   `};
 `;
+/*
+background-color: rgba(0, 0, 0, 0.7);
+&:hover {
+	background-color: rgba(0, 0, 0, 0.4);
+}
+*/
 const SliderItem = styled.div`
-  display: inline-block;
+  display: inline-flex;
   position: relative;
   white-space: normal;
   vertical-align: top;
