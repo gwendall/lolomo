@@ -15,31 +15,13 @@ const ItemDefaultRendered = ({
   spaceBetween,
 }) => (
   <ItemDefault
-    onClick={toggleActive}
+    onMouseEnter={setActive}
+    onMouseLeave={removeActive}
     style={{
       backgroundColor: color,
     }}
   >
     <div>{index}</div>
-    <span>
-      {active && (
-        <ItemDefaultActive
-          style={{
-            backgroundColor: color,
-          }}
-          onClick={toggleActive}
-          {...{
-            speedMove,
-            width,
-            widthPercent,
-            scaleActiveBy,
-            spaceBetween,
-          }}
-        >
-          <div>{index}</div>
-        </ItemDefaultActive>
-      )}
-    </span>
   </ItemDefault>
 );
 const ItemDefault = styled.div`
@@ -54,6 +36,27 @@ const ItemDefault = styled.div`
   cursor: pointer;
   user-select: none;
 `;
+/*
+<span>
+  {active && (
+    <ItemDefaultActive
+      style={{
+        backgroundColor: color,
+      }}
+      onMouseEnter={setActive}
+      onMouseLeave={removeActive}
+      {...{
+        speedMove,
+        width,
+        widthPercent,
+        scaleActiveBy,
+        spaceBetween,
+      }}
+    >
+      <div>{index}</div>
+    </ItemDefaultActive>
+  )}
+</span>
 const ItemDefaultActive = styled.div`
   display: flex;
   flex-direction: column;
@@ -68,7 +71,7 @@ const ItemDefaultActive = styled.div`
   left: ${({ widthPercent, scaleActiveBy }) => (-(scaleActiveBy / 2) * 100) / 2}%;
   margin: 0 -${({ spaceBetween }) => spaceBetween * 2}px;
 `;
-
+*/
 /*
 animation: ${keyframes`
   0% {
@@ -204,6 +207,8 @@ export default class Lolomo extends React.Component {
                 translateRight={Number.isInteger(this.state.active) && this.state.active < index}
                 firstIsActive={firstIsActive}
                 lastIsActive={lastIsActive}
+                isFirst={Number.isInteger(index / itemsPerSlide)}
+                isLast={Number.isInteger((index + 1) / itemsPerSlide)}
                 isActive={this.state.active === index}
                 index={index}
               >
@@ -232,11 +237,11 @@ Lolomo.defaultProps = {
   backgroundColor: 'black',
   items: [],
   itemsPerSlide: 8,
-  scaleActiveBy: 2,
+  scaleActiveBy: 1.2,
   spaceBetween: 4,
   navPadding: 80,
   speedSlide: 900,
-  speedMove: 450,
+  speedMove: 350,
   hoverTimeout: 500,
   renderItem: ItemDefaultRendered,
   renderHandlePrev: ({ goToPrev, ...p }) => (
@@ -308,12 +313,6 @@ const SliderHandleDefault = styled.div`
     background-color: transparent;
   `};
 `;
-/*
-background-color: rgba(0, 0, 0, 0.7);
-&:hover {
-	background-color: rgba(0, 0, 0, 0.4);
-}
-*/
 const SliderItem = styled.div`
   display: inline-flex;
   position: relative;
@@ -335,6 +334,9 @@ const SliderItem = styled.div`
     width,
     widthPercent,
     scaleActiveBy,
+    spaceBetween,
+    isFirst,
+    isLast,
   }) => {
     let transform = '';
     if (translateLeft) {
@@ -367,44 +369,21 @@ const SliderItem = styled.div`
         `;
       }
     }
-
-    /*
-    if (translateLeft) {
-      if (firstIsActive) {
-        transform += `
-        transform: translate3d(0, 0, 0);
-        `;
-      } else if (lastIsActive) {
-        transform += `
-        transform: translate3d(-${2 * itemActivePadding}px, 0, 0);
-        `;
-      } else {
-        transform += `
-        transform: translate3d(-${itemActivePadding}px, 0, 0);
-        `;
-      }
-    }
-    if (translateRight) {
-      if (lastIsActive) {
-        transform += `
-        transform: translate3d(0, 0, 0);
-        `;
-      } else if (firstIsActive) {
-        transform += `
-          transform: translate3d(${2 * itemActivePadding}px, 0, 0);
-          `;
-      } else {
-        transform += `
-          transform: translate3d(${itemActivePadding}px, 0, 0);
-        `;
-      }
-    }
     if (isActive) {
       transform += `
-        max-width: ${+widthPercent * +scaleActiveBy}%;
+        transform: scale(${scaleActiveBy + spaceBetween / width});
       `;
     }
-    */
+    if (isFirst) {
+      transform += `
+        transform-origin: center left;
+      `;
+    }
+    if (isLast) {
+      transform += `
+        transform-origin: center right;
+      `;
+    }
     return transform;
   }};
 `;
