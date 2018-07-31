@@ -43,6 +43,7 @@ const ItemDefaultRendered = ({
   </ItemDefault>
 );
 const ItemDefault = styled.div`
+  flex: 1;
   height: 200px;
   display: flex;
   flex-direction: column;
