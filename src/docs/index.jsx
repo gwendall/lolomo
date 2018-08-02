@@ -8,9 +8,9 @@ import styled from 'styled-components';
 const getList = (n = 50) => Array.from({ length: n }).map(() => ({ color: randomcolor() }));
 const LISTS = Array.from({ length: 10 }).map(() => getList());
 const Lists = () =>
-  LISTS.map(array => (
-    <React.Fragment>
-      <Lolomo backgroundColor="#eee" items={array} spaceBetween={2} />
+  LISTS.map((array, index) => (
+    <React.Fragment key={`list.${index}`}>
+      <Lolomo scale={true} backgroundColor="#eee" items={array} spaceBetween={2} />
       <div style={{ height: 40 }} />
     </React.Fragment>
   ));

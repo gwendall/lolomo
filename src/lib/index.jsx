@@ -47,14 +47,16 @@ export default class Lolomo extends React.Component {
     return Math.max(0, Math.ceil(items.length / itemsPerSlide) - 1) + 1;
   };
   setActive = i => {
+    const { hoverTimeout } = this.props;
     this.timeoutLeave && clearTimeout(this.timeoutLeave);
-    this.timeoutEnter = setTimeout(() => this.setState({ active: i }), 250);
+    this.timeoutEnter = setTimeout(() => this.setState({ active: i }), hoverTimeout);
     // this.setState({ active: i });
     // this.timeout = setTimeout(() => this.setState({ active: i }), 300);
   };
   removeActive = () => {
+    const { hoverTimeout } = this.props;
     this.timeoutEnter && clearTimeout(this.timeoutEnter);
-    this.timeoutLeave = setTimeout(() => this.setState({ active: null }), 500);
+    this.timeoutLeave = setTimeout(() => this.setState({ active: null }), hoverTimeout);
     // this.setState({ active: null });
   };
   toggleActive = i => {
@@ -68,6 +70,8 @@ export default class Lolomo extends React.Component {
     const {
       items,
       itemsPerSlide,
+      itemProps,
+      scale,
       scaleActiveBy,
       navPadding,
       spaceBetween,
@@ -130,6 +134,7 @@ export default class Lolomo extends React.Component {
                 width={itemWidth}
                 widthPercent={itemWidthPercent}
                 scaleActiveBy={scaleActiveBy}
+                scale={scale}
                 translateLeft={Number.isInteger(this.state.active) && this.state.active > index}
                 translateRight={Number.isInteger(this.state.active) && this.state.active < index}
                 firstIsActive={firstIsActive}
@@ -140,6 +145,7 @@ export default class Lolomo extends React.Component {
                 index={index}
               >
                 <SliderItemInner
+                  {...itemProps(index)}
                   {...{
                     item,
                     index,
@@ -163,6 +169,7 @@ export default class Lolomo extends React.Component {
   }
 }
 Lolomo.defaultProps = {
+  hoverTimeout: 200,
   backgroundColor: 'black',
   items: [],
   itemsPerSlide: 8,
@@ -170,8 +177,10 @@ Lolomo.defaultProps = {
   spaceBetween: 4,
   navPadding: 80,
   speedSlide: 900,
-  speedMove: 350,
+  speedMove: 250,
   hoverTimeout: 500,
+  itemProps: () => ({}),
+  scale: true,
   renderItem: ({ item: { color }, index, setActive, removeActive }) => (
     <ItemDefault
       onMouseEnter={setActive}
@@ -289,7 +298,9 @@ const SliderItem = styled.div`
     spaceBetween,
     isFirst,
     isLast,
+    scale,
   }) => {
+    if (!scale) return '';
     let transform = '';
     if (translateLeft) {
       if (firstIsActive) {
@@ -324,6 +335,7 @@ const SliderItem = styled.div`
     if (isActive) {
       transform += `
         transform: scale(${scaleActiveBy + spaceBetween / width});
+        z-index: 1;
       `;
     }
     if (isFirst) {
